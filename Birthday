@@ -1,0 +1,60 @@
+# Tiny Neural Net (2-2-1) learns XOR from scratch — pure Python
+import math, random
+
+def sigmoid(x): return 1.0 / (1.0 + math.exp(-x))
+def d_sigmoid(y): return y * (1.0 - y)  # derivative wrt output y
+
+random.seed(0
+w_ih = [[(random.random()-0.5)*2*0.5 for _ in range(2)] for __ in range(2)]  # 2 hidden x 2 input
+b_h  = [(random.random()-0.5)*2*0.5 for _ in range(2)]
+w_ho = [(random.random()-0.5)*2*0.5 for _ in range(2)]  # 1 output x 2 hidden
+b_o  = (random.random()-0.5)*2*0.5
+
+data = [
+    ([0.0, 0.0], 0.0),
+    ([0.0, 1.0], 1.0),
+    ([1.0, 0.0], 1.0),
+    ([1.0, 1.0], 0.0),
+]
+
+lr = 0.5
+for epoch in range(5000):
+    total_loss = 0.0
+    for x, t in data:
+        # forward
+        h = [0.0, 0.0]
+        for j in range(2):
+            s = b_h[j]
+            for i in range(2): s += w_ih[j][i] * x[i]
+            h[j] = sigmoid(s)
+        s_o = b_o + sum(w_ho[j]*h[j] for j in range(2))
+        y = sigmoid(s_o)
+
+        # loss
+        loss = 0.5 * (t - y)**2
+        total_loss += loss
+
+        # backward (output)
+        dy = (y - t) * d_sigmoid(y)
+        # grads output weights/bias
+        for j in range(2):
+            w_ho[j] -= lr * dy * h[j]
+        b_o -= lr * dy
+
+        # hidden layer grads
+        dh = [dy * w_ho[j] * d_sigmoid(h[j]) for j in range(2)]
+        for j in range(2):
+            for i in range(2):
+                w_ih[j][i] -= lr * dh[j] * x[i]
+            b_h[j] -= lr * dh[j]
+
+    if (epoch+1) % 500 == 0:
+        print(f"epoch {epoch+1:4d}  loss={total_loss:.6f}")
+
+
+print("\nPredictions:")
+for x, t in data:
+    h = [sigmoid(b_h[j] + sum(w_ih[j][i]*x[i] for i in range(2))) for j in range(2)]
+    y = sigmoid(b_o + sum(w_ho[j]*h[j] for j in r
+ange(2)))
+    print(f"X={x} -> {y:.4f} (target {t})")
