@@ -1,0 +1,45 @@
+import qrcode
+from PIL import Image, ImageDraw, ImageOps
+
+# النص أو الرابط اللي هيكون جوه الـ QR
+data = "https://example.com"
+
+# إنشاء كود QR عادي
+qr = qrcode.QRCode(
+    version=4,  # حجم الكود (من 1 لحد 40)
+    error_correction=qrcode.constants.ERROR_CORRECT_H,
+    box_size=10,
+    border=2,
+)
+qr.add_data(data)
+qr.make(fit=True)
+
+# رسم الـ QR
+img_qr = qr.make_image(fill_color="red", back_color="white").convert("RGB")
+
+# إنشاء قناع (mask) على شكل قلب
+mask = Image.new("L", img_qr.size, 0)
+draw = ImageDraw.Draw(mask)
+w, h = img_qr.size
+heart = Image.new("L", (w, h), 0)
+d = ImageDraw.Draw(heart)
+
+# معادلة رسم قلب
+d.polygon(
+    [(w/2, h*0.9), (w*0.1, h*0.4), (w*0.25, h*0.15), (w/2, h*0.35),
+     (w*0.75, h*0.15), (w*0.9, h*0.4)],
+    fill=255
+)
+d.ellipse([w*0.1, h*0.05, w*0.45, h*0.45], fill=255)
+d.ellipse([w*0.55, h*0.05, w*0.9, h*0.45], fill=255)
+
+mask = ImageOps.fit(heart, img_qr.size, centering=(0.5, 0.5))
+
+# تطبيق القناع على الـ QR
+final_img = Image.new("RGB", img_qr.size, "white")
+final_img.paste(img_qr, mask=mask)
+
+# حفظ النتيجة
+final_img.save("heart_qr.png")
+
+print("✅ تم إنشاء الكود في ملف heart_qr.png")
